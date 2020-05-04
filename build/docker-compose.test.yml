@@ -1,0 +1,25 @@
+version: '3.4'
+
+x-common-variables: &common-variables
+  ENV: test
+  REDIS_HOST: redis
+  POSTGRES_HOST: postgres
+  POSTGRES_USER: test_user
+  POSTGRES_PASSWORD: secret
+  POSTGRES_DB: test
+  PGDATA: /pgtmpfs
+
+services:
+  web:
+    image: fwork/lead_service:latest
+    env_file:
+      - ../.env
+    command: ["sh", "/app/build/run_test.sh"]
+
+  postgres:
+    image: postgres:11.1-alpine
+    env_file:
+      - ../.env
+    volumes:
+      - type: tmpfs
+        target: /pgtmpfs

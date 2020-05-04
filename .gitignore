@@ -1,0 +1,15 @@
+*.swo
+*.swp
+*.pyc
+*.pyo
+*.log
+*.lock
+.venv
+.pypyenv
+.idea
+.mypy_cache/
+.vscode/
+*__pycache__/
+*.iml
+.pytest_cache/
+**.python-version
