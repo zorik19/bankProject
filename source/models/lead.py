@@ -17,9 +17,7 @@ class Lead(db.Model):
     phone_number = Column(VARCHAR(length=20), index=True, comment='Телефон')
     description = Column(VARCHAR(), nullable=True, comment='Описание заказа')
     amount = Column(Float, nullable=True, comment='Сумма сделки')
-    contacts = Column(JSONB,
-                      comment='Контакты пользователя')  # POST/PATCH leads/<lead_id>/contact обязательно {email: [],
-    # phone: [] ,linkedin}
+    contacts = Column(JSONB, comment='Контакты пользователя')
     created_at = Column(DateTime(timezone=True), server_default=func.current_timestamp())
     modified_at = Column(DateTime(timezone=True), onupdate=func.current_timestamp())
     finish_at = Column(DateTime(timezone=True), nullable=True, comment='Время завершения')

@@ -1,5 +1,6 @@
-from fwork.common.db.postgres.conn_async import db
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, func, Index, VARCHAR
+
+from fwork.common.db.postgres.conn_async import db
 
 
 class Comment(db.Model):
@@ -12,10 +13,6 @@ class Comment(db.Model):
     created_at = Column(DateTime(timezone=True), server_default=func.current_timestamp())
     modified_at = Column(DateTime(timezone=True), onupdate=func.current_timestamp())
 
-    # __table_args__ = (
-    #     Index('comments_lead_created_at_idx', "lead_id", "created_at")
-    #     )
-
     def __repr__(self):
         return f'<Comment(' \
                f'id={self.id}, ' \
@@ -24,5 +21,6 @@ class Comment(db.Model):
                f'created_at={self.created_at},' \
                f'modified_at={self.modified_at},' \
                f')>'
+
 
 Index('comments_lead_created_at_idx', Comment.lead_id, Comment.created_at.desc())
