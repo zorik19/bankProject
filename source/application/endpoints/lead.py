@@ -3,7 +3,7 @@ from sanic_openapi import doc
 
 from fwork.common.auth import authorized
 from fwork.common.http import HTTPStatus
-from fwork.common.http.response import CreatedResponse
+from fwork.common.http.response import CreatedResponse, OKResponse
 from fwork.common.logs.sanic_helpers import TrackedRequest
 from fwork.common.openapi.spec import DocMixin, error_responses, many_response, request_body, single_response
 from fwork.common.sanic.crud.factory import make_view
@@ -11,7 +11,7 @@ from fwork.common.sanic.crud.views import PagedEntitiesView, SingleEntityView
 from fwork.common.schemas.request_args import IntPaginationSchema
 from source.logger import get_logger
 from source.models.lead import Lead, LeadSource, LeadStatus
-from source.schemas.lead import LeadBaseSchema, LeadSourceBaseSchema, LeadStatusBaseSchema
+from source.schemas.lead import LeadBaseSchema, LeadRequestSchema, LeadSourceBaseSchema, LeadStatusBaseSchema
 from source.schemas.response_schemas.lead import LeadResponseSchema, LeadSourceResponseSchema, LeadStatusResponseSchema
 
 log = get_logger('lead')
@@ -41,15 +41,15 @@ class LeadsView(DocMixin, LeadsBaseView):
         return await super().get(request)
 
     @doc.summary('Create new Lead')
-    @doc.description('Create new Lead')
-    @doc.consumes(request_body(LeadBaseSchema), location='body')
+    @doc.description('Create new Lead with manual source type')
+    @doc.consumes(request_body(LeadRequestSchema), location='body')
     @doc.response(201, 'lead created', description='Created response')
     @error_responses(401)
     async def post(self, request: TrackedRequest) -> HTTPResponse:
         data = LeadBaseSchema().load(request.json)
+        data['source_id'] = LeadSourceType.MANUAL.value
         lead = await Lead.create(**data)
         log.debug(f'lead created {lead}')
-
         return CreatedResponse('Lead successfully created')
 
 
