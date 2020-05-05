@@ -2,6 +2,7 @@ from sanic_openapi import swagger_blueprint
 
 from fwork.common.env.version import get_app_version
 from fwork.common.sanic.app import make_app, run_app
+from source.application.endpoints.comment import CommentsView, CommentView
 from source.application.endpoints.lead import LeadSourcesView, LeadStatusesView, LeadsView, LeadView
 from source.constants import PROJECT_NAME
 
@@ -15,6 +16,8 @@ app.add_route(LeadsView.as_view(), f'{V1}/leads')
 app.add_route(LeadStatusesView.as_view(), f'{V1}/lead_statues')
 app.add_route(LeadView.as_view(), f'{V1}/leads/<lead_id:int>')
 app.add_route(LeadSourcesView.as_view(), f'{V1}/lead_sources/')
+app.add_route(CommentsView.as_view(), f'{V1}/leads/<lead_id:int>/comments')
+app.add_route(CommentView.as_view(), f'{V1}/comments/<comment_id:int>')
 
 # Enable OpenApi spec generation
 app.blueprint(swagger_blueprint)
