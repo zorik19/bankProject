@@ -1,4 +1,8 @@
+from io import BytesIO
+
+from sanic import response
 from sanic.response import HTTPResponse
+from sanic.views import HTTPMethodView
 from sanic_openapi import doc
 
 from fwork.common.auth import authorized
@@ -9,6 +13,7 @@ from fwork.common.openapi.spec import DocMixin, error_responses, many_response, 
 from fwork.common.sanic.crud.factory import make_view
 from fwork.common.sanic.crud.views import PagedEntitiesView, SingleEntityView
 from fwork.common.schemas.request_args import IntPaginationSchema
+from source.constants import FORMAT_TO_MIME_TYPE, LeadSourceType
 from source.logger import get_logger
 from source.models.lead import Lead, LeadSource, LeadStatus
 from source.schemas.lead import LeadBaseSchema, LeadRequestSchema, LeadSourceBaseSchema, LeadStatusBaseSchema
@@ -75,6 +80,30 @@ class LeadView(DocMixin, LeadBaseView):
     @error_responses(401)
     async def delete(self, request: TrackedRequest, lead_id: int) -> HTTPResponse:
         return await super().delete(request, lead_id)
+
+
+class LeadFileView(DocMixin, HTTPMethodView):
+    @doc.summary('Download template file')
+    @doc.description('Download template file of leads in different formats like `csv`, `xlsx`')
+    @doc.consumes(doc.String(name='format', required=True, description='Format of input data'),
+                  location='query')
+    @doc.consumes(request_body(LeadBaseSchema), location='body')
+    @doc.response(200, 'OK', description='Leads uploaded successfully')
+    async def get(self, request) -> HTTPResponse:
+        # TODO: implement me
+        data = BytesIO(b"some initial binary data: \x00\x01")
+        return response.raw(data, content_type=FORMAT_TO_MIME_TYPE['xlsx'])
+
+    @doc.summary('Upload file of leads')
+    @doc.description('Upload file of leads in different formats like `csv`, `xlsx`')
+    @doc.consumes(doc.String(name='format', required=True, description='Format of input data'),
+                  location='query')
+    @doc.consumes(request_body(LeadBaseSchema), location='body')
+    @doc.response(200, 'OK', description='Leads uploaded successfully')
+    async def post(self, request) -> HTTPResponse:
+        # TODO: implement me
+        BytesIO(request.body)
+        return OKResponse()
 
 
 class LeadStatusesView(DocMixin, LeadStatusesBaseView):
