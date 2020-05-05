@@ -87,11 +87,10 @@ class LeadFileView(DocMixin, HTTPMethodView):
     @doc.description('Download template file of leads in different formats like `csv`, `xlsx`')
     @doc.consumes(doc.String(name='format', required=True, description='Format of input data'),
                   location='query')
-    @doc.consumes(request_body(LeadBaseSchema), location='body')
     @doc.response(200, 'OK', description='Leads uploaded successfully')
     async def get(self, request) -> HTTPResponse:
         # TODO: implement me
-        data = BytesIO(b"some initial binary data: \x00\x01")
+        data = BytesIO(b"some initial binary data: \x00\x01").read()
         return response.raw(data, content_type=FORMAT_TO_MIME_TYPE['xlsx'])
 
     @doc.summary('Upload file of leads')
