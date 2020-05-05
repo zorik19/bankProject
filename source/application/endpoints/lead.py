@@ -82,7 +82,7 @@ class LeadStatusesView(DocMixin, LeadStatusesBaseView):
 
     @doc.summary('Get list of lead statues')
     @doc.description('Get list of available lead statuses')
-    @doc.response(200, many_response(LeadResponseSchema), description='List of lead statuses')
+    @doc.response(200, many_response(LeadStatusResponseSchema), description='List of lead statuses')
     @error_responses(401)
     async def get(self, request: TrackedRequest) -> HTTPResponse:
         return await super().get(request)
@@ -105,7 +105,7 @@ class LeadSourcesView(DocMixin, LeadSourcesBaseView):
 
     @doc.summary('Get list of lead sources')
     @doc.description('Get list of available lead sources')
-    @doc.response(200, many_response(LeadResponseSchema), description='List of lead sources')
+    @doc.response(200, many_response(LeadSourceResponseSchema), description='List of lead sources')
     @error_responses(401)
     async def get(self, request: TrackedRequest) -> HTTPResponse:
         return await super().get(request)
