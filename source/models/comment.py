@@ -19,7 +19,7 @@ class Comment(db.Model):
                f'lead_id={self.lead_id}, ' \
                f'comment={self.comment}, ' \
                f'created_at={self.created_at},' \
-               f'modified_at={self.modified_at},' \
+               f'modified_at={self.modified_at}' \
                f')>'
 
 
