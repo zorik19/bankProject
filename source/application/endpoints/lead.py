@@ -13,6 +13,7 @@ from fwork.common.openapi.spec import DocMixin, error_responses, many_response, 
 from fwork.common.sanic.crud.factory import make_view
 from fwork.common.sanic.crud.views import PagedEntitiesView, SingleEntityView
 from fwork.common.schemas.request_args import IntPaginationSchema
+from source.application.utils.hash import hash_payload
 from source.constants import FORMAT_TO_MIME_TYPE, LeadSourceType
 from source.logger import get_logger
 from source.models.lead import Lead, LeadSource, LeadStatus
@@ -53,6 +54,8 @@ class LeadsView(DocMixin, LeadsBaseView):
     async def post(self, request: TrackedRequest) -> HTTPResponse:
         data = LeadBaseSchema().load(request.json)
         data['source_id'] = LeadSourceType.MANUAL.value
+        lead_hash = hash_payload(data)
+        data['lead_hash'] = lead_hash
         lead = await Lead.create(**data)
         log.debug(f'lead created {lead}')
         return CreatedResponse('Lead successfully created')
