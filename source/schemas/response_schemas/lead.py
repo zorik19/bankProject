@@ -6,6 +6,6 @@ from source.models.lead import Lead, LeadSource, LeadStatus
 
 _make_schema = partial(make_model_response_schema, exclude=DICT_SCHEMA_EXCLUDED_FIELDS)
 
-LeadResponseSchema = _make_schema(Lead, type_='lead')
+LeadResponseSchema = make_model_response_schema(Lead, exclude=DICT_SCHEMA_EXCLUDED_FIELDS + ('lead_hash',), type_='lead')
 LeadStatusResponseSchema = _make_schema(LeadStatus, type_='lead_statuses')
 LeadSourceResponseSchema = _make_schema(LeadSource, type_='lead_source')

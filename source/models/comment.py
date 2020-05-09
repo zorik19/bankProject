@@ -7,9 +7,10 @@ class Comment(db.Model):
     __tablename__ = 'comments'
 
     id = Column(BigInteger, primary_key=True)
-    lead_id = Column(BigInteger, ForeignKey('leads.id'), index=True, comment='ID Задачи')
+    lead_id = Column(BigInteger, ForeignKey('leads.id', ondelete='CASCADE'), index=True, comment='ID Задачи')
     external_id = Column(BigInteger, nullable=True, comment='ID пользователя из сервиса авторизации')
     comment = Column(VARCHAR(), comment='Комментарий')
+    status_id = Column(BigInteger, ForeignKey('lead_statuses.id'), nullable=True, index=True, comment='Статус лида')
     created_at = Column(DateTime(timezone=True), server_default=func.current_timestamp())
     modified_at = Column(DateTime(timezone=True), onupdate=func.current_timestamp())
 
@@ -18,6 +19,7 @@ class Comment(db.Model):
                f'id={self.id}, ' \
                f'lead_id={self.lead_id}, ' \
                f'comment={self.comment}, ' \
+               f'status_id={self.status_id}, ' \
                f'created_at={self.created_at},' \
                f'modified_at={self.modified_at}' \
                f')>'

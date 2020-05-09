@@ -6,7 +6,7 @@ from source.models.lead import Lead, LeadSource, LeadStatus
 
 _make_schema = partial(make_model_request_schema, exclude=DICT_SCHEMA_EXCLUDED_FIELDS + ('id',))
 
-LeadBaseSchema = _make_schema(Lead)
+LeadBaseSchema = make_model_request_schema(Lead, exclude=DICT_SCHEMA_EXCLUDED_FIELDS + ('id', 'lead_hash'))
 LeadStatusBaseSchema = _make_schema(LeadStatus)
 LeadSourceBaseSchema = _make_schema(LeadSource)
 
