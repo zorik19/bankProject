@@ -3,6 +3,7 @@ from sanic_openapi import doc
 
 from fwork.common.auth import authorized
 from fwork.common.auth.token import get_auth_payload_from_request
+from fwork.common.db.postgres.conn_async import db
 from fwork.common.http import HTTPStatus
 from fwork.common.http.response import CreatedResponse
 from fwork.common.logs.sanic_helpers import TrackedRequest
@@ -12,6 +13,7 @@ from fwork.common.sanic.crud.views import PagedEntitiesView, SingleEntityView
 from fwork.common.schemas.request_args import RawPaginationSchema
 from source.logger import get_logger
 from source.models.comment import Comment
+from source.models.lead import LeadStatus
 from source.schemas.comment import CommentBaseSchema, CommentRequestSchema
 from source.schemas.response_schemas.comment import CommentResponseSchema
 
@@ -39,7 +41,12 @@ class CommentsView(DocMixin, CommentsBaseView):
         :return: SQLAlchemy.Query
         """
         lead_id = url_params['lead_id']
-        query = Comment.query.where(Comment.lead_id == lead_id).order_by(Comment.t.c.created_at.desc())
+        query = db.select([*Comment.t.c, LeadStatus.t.c.description.label('status')]) \
+            .select_from(Comment.t
+                         .join(LeadStatus.t)) \
+            .where(Comment.lead_id == lead_id) \
+            .order_by(Comment.t.c.created_at.desc())
+
         return query
 
     @doc.summary('Get list of comments')
