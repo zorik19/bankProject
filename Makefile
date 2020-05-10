@@ -29,7 +29,7 @@ compose_config:
 	docker-compose -f ./build/docker-compose.test.yml config
 
 run:
-	docker-compose -f ./build/docker-compose.yml up web
+	docker-compose -f ./build/docker-compose.yml up web_lead
 
 test: compose_config clean
 	docker-compose -f ./build/docker-compose.test.yml up --renew-anon-volumes --abort-on-container-exit

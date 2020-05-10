@@ -2,7 +2,7 @@ version: '3.4'
 
 
 services:
-  web:
+  web_lead:
     image: ${IMAGE_NAME}
     env_file:
       - ../.env
@@ -23,7 +23,14 @@ services:
     ports:
       - 5432:5432
     restart: always
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
-      - type: tmpfs
-        target: /pgtmpfs
+         - ~/data/pgdata:/var/lib/postgresql/data/pgdata
+#    external_links:
+#      - build_postgres_1
+
+# uncomment to use tmpfs
+#      - type: tmpfs
+#        target: /pgtmpfs
 
