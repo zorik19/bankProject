@@ -10,4 +10,4 @@ CommentBaseSchema = make_model_request_schema(Comment, exclude=DICT_SCHEMA_EXCLU
 class CommentRequestSchema(Schema):
     """Useful for post query on comments"""
     comment = fields.Str(required=True, description='Comment for lead')
-    status_id = fields.Int(required=True, description='current or new Lead status')
+    status_id = fields.Int(required=False, description='current or new Lead status')
