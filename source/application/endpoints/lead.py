@@ -1,33 +1,46 @@
+from datetime import date
 from io import BytesIO
 
+import sqlalchemy as sa
 from sanic import response
 from sanic.response import HTTPResponse
 from sanic.views import HTTPMethodView
 from sanic_openapi import doc
 
 from fwork.common.auth import authorized
+from fwork.common.db.postgres.conn_async import db
 from fwork.common.http import HTTPStatus
 from fwork.common.http.response import CreatedResponse, OKResponse
 from fwork.common.logs.sanic_helpers import TrackedRequest
-from fwork.common.openapi.spec import DocMixin, error_responses, many_response, request_body, single_response
+from fwork.common.openapi.spec import DocMixin, error_responses, many_response, request_body, \
+    single_response
 from fwork.common.sanic.crud.factory import make_view
+from fwork.common.sanic.crud.requests import raw_args
 from fwork.common.sanic.crud.views import PagedEntitiesView, SingleEntityView
-from fwork.common.schemas.request_args import IntPaginationSchema
+from fwork.common.schemas.request_args import IntPaginationSchema, RawPaginationSchema
 from source.application.utils.hash import hash_payload
 from source.constants import FORMAT_TO_MIME_TYPE, LeadSourceType
 from source.logger import get_logger
 from source.models.lead import Lead, LeadSource, LeadStatus
-from source.schemas.lead import LeadBaseSchema, LeadRequestSchema, LeadSourceBaseSchema, LeadStatusBaseSchema
-from source.schemas.response_schemas.lead import LeadResponseSchema, LeadSourceResponseSchema, LeadStatusResponseSchema
+from source.schemas.lead import LeadBaseSchema, LeadFilterSchema, LeadRequestSchema, LeadSourceBaseSchema, \
+    LeadStatusBaseSchema
+from source.schemas.response_schemas.lead import LeadResponseBaseSchema, LeadResponseSchema, \
+    LeadSourceResponseSchema, \
+    LeadStatusResponseSchema
 
 log = get_logger('lead')
 
 decorators = [authorized]
 
-lead_views_common = (Lead, LeadResponseSchema, log, decorators)
-LeadBaseView = make_view(SingleEntityView, *lead_views_common, enable_delete=True, enable_patch=True,
-                         patch_request_schema=LeadBaseSchema, patch_response_schema=LeadResponseSchema)
-LeadsBaseView = make_view(PagedEntitiesView, *lead_views_common)
+LeadBaseView = make_view(SingleEntityView,
+                         Lead,
+                         LeadResponseBaseSchema,
+                         log,
+                         decorators,
+                         enable_delete=True,
+                         enable_patch=True,
+                         patch_request_schema=LeadBaseSchema, patch_response_schema=LeadResponseBaseSchema)
+LeadsBaseView = make_view(PagedEntitiesView, Lead, LeadResponseSchema, log, decorators)
 
 lead_source_views_common = (LeadSource, LeadSourceResponseSchema, log, decorators)
 LeadSourcesBaseView = make_view(PagedEntitiesView, *lead_source_views_common)
@@ -37,14 +50,50 @@ LeadStatusesBaseView = make_view(PagedEntitiesView, *lead_status_views_common)
 
 
 class LeadsView(DocMixin, LeadsBaseView):
-    PAGING_SCHEMA = IntPaginationSchema
+    PAGING_SCHEMA = RawPaginationSchema
+    FILTER_SCHEMA = LeadFilterSchema
+
+    def base_get_query(self, request, url_params):
+
+        query = db.select([*Lead.t.c,
+                           LeadStatus.t.c.description.label('status'),
+                           LeadSource.t.c.description.label('source')]) \
+            .select_from(Lead.t
+                         .outerjoin(LeadStatus.t) \
+                         .outerjoin(LeadSource.t)) \
+            .order_by(self.MODEL_CLASS.finish_at.desc()) \
+            .order_by(self.MODEL_CLASS.created_at.desc()) \
+            .order_by(self.MODEL_CLASS.id)
+
+        if url_params.get('today'):
+            query = query.where(sa.func.date(Lead.finish_at) == date.today())
+        if url_params.get('incoming'):
+            query = query.where(Lead.external_id == None)
+        if url_params.get('external_id'):
+            query = query.where(Lead.external_id == url_params['external_id'])
+        return query
+
+    def get_collection_query(self, request, url_params, log):
+        """
+        override this method to avoid filtering, as we have custom filters
+        """
+        query = self.base_get_query(request, url_params)
+        parser = self.REQUEST_PARSER(self, request, url_params)
+
+        helper = self.QUERY_HELPER(self.MODEL_CLASS, query=query, log=log)
+        helper.add_order(parser.get_order())
+        helper.add_paging(parser.get_paging())
+
+        return helper.query
 
     @doc.summary('Get list of leads')
     @doc.description('Get list of available leads')
     @doc.response(200, many_response(LeadResponseSchema), description='List of leads')
     @error_responses(401)
     async def get(self, request: TrackedRequest) -> HTTPResponse:
-        return await super().get(request)
+        raw_params = raw_args(request)
+        query_params = self.FILTER_SCHEMA().load(raw_params)
+        return await super().get(request, **query_params)
 
     @doc.summary('Create new Lead')
     @doc.description('Create new Lead with manual source type')
@@ -64,7 +113,7 @@ class LeadsView(DocMixin, LeadsBaseView):
 class LeadView(DocMixin, LeadBaseView):
     @doc.summary('Get lead by id')
     @doc.description('Get lead by id')
-    @doc.response(200, single_response(LeadResponseSchema), description='lead')
+    @doc.response(200, single_response(LeadResponseBaseSchema), description='lead')
     @error_responses(401)
     async def get(self, request: TrackedRequest, **url_params) -> HTTPResponse:
         return await super().get(request, **url_params)
@@ -72,9 +121,10 @@ class LeadView(DocMixin, LeadBaseView):
     @doc.summary('Update lead by id')
     @doc.description('Update lead by id wih new status')
     @doc.consumes(request_body(LeadBaseSchema), location='body')
-    @doc.response(200, single_response(LeadResponseSchema), description='Updated lead')
+    @doc.response(200, single_response(LeadResponseBaseSchema), description='Updated lead')
     @error_responses(401)
     async def patch(self, request: TrackedRequest, lead_id: int) -> HTTPResponse:
+        # todo: запрет in_progress если уже in progress
         return await super().patch(request, lead_id)
 
     @doc.summary('delete lead by id')

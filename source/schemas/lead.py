@@ -1,7 +1,10 @@
 from functools import partial
 
+from marshmallow import fields
+
 from fwork.common.schemas.constants import DICT_SCHEMA_EXCLUDED_FIELDS
 from fwork.common.schemas.factory import make_model_request_schema
+from fwork.common.schemas.schema import FilterSchema
 from source.models.lead import Lead, LeadSource, LeadStatus
 
 _make_schema = partial(make_model_request_schema, exclude=DICT_SCHEMA_EXCLUDED_FIELDS + ('id',))
@@ -14,3 +17,9 @@ LeadSourceBaseSchema = _make_schema(LeadSource)
 class LeadRequestSchema(LeadBaseSchema):
     class Meta:
         exclude = ('source_id',)
+
+
+class LeadFilterSchema(FilterSchema):
+    today = fields.Boolean(required=False, description='finish_at today', default=False)
+    incoming = fields.Boolean(required=False, description='Not assigned leads', default=False)
+    external_id = fields.Int(required=False, description='Assigned to a definite user')
