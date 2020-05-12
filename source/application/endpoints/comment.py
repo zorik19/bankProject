@@ -13,7 +13,7 @@ from fwork.common.sanic.crud.views import PagedEntitiesView, SingleEntityView
 from fwork.common.schemas.request_args import RawPaginationSchema
 from source.logger import get_logger
 from source.models.comment import Comment
-from source.models.lead import LeadStatus
+from source.models.lead import Lead, LeadStatus
 from source.schemas.comment import CommentBaseSchema, CommentRequestSchema
 from source.schemas.response_schemas.comment import CommentResponseSchema
 
@@ -71,7 +71,12 @@ class CommentsView(DocMixin, CommentsBaseView):
         data['external_id'] = user_id
         data['lead_id'] = lead_id
 
-        comment = await Comment.create(**data)
+        async with db.transaction() as tx:
+            lead_q = Lead.query.where(Lead.id == lead_id).with_for_update()
+            lead = await lead_q.gino.first()
+            comment = await Comment.create(**data)
+            await lead.update(status_id=data['status_id']).apply()
+
         log.debug(f'comment created {comment}')
 
         return CreatedResponse('Comment successfully created')
