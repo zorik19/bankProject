@@ -21,12 +21,12 @@ from fwork.common.schemas.request_args import IntPaginationSchema, RawPagination
 from source.application.utils.hash import hash_payload
 from source.constants import FORMAT_TO_MIME_TYPE, LeadSourceType
 from source.logger import get_logger
-from source.models.lead import Lead, LeadSource, LeadStatus
+from source.models.lead import Lead, LeadSource, LeadStatus, LeadType
 from source.schemas.lead import LeadBaseSchema, LeadFilterSchema, LeadRequestSchema, LeadSourceBaseSchema, \
-    LeadStatusBaseSchema
+    LeadStatusBaseSchema, LeadTypeBaseSchema
 from source.schemas.response_schemas.lead import LeadResponseBaseSchema, LeadResponseSchema, \
     LeadSourceResponseSchema, \
-    LeadStatusResponseSchema
+    LeadStatusResponseSchema, LeadTypeResponseSchema
 
 log = get_logger('lead')
 
@@ -48,6 +48,9 @@ LeadSourcesBaseView = make_view(PagedEntitiesView, *lead_source_views_common)
 lead_status_views_common = (LeadStatus, LeadStatusResponseSchema, log, decorators)
 LeadStatusesBaseView = make_view(PagedEntitiesView, *lead_status_views_common)
 
+lead_type_views_common = (LeadType, LeadTypeResponseSchema, log, decorators)
+LeadTypesBaseView = make_view(PagedEntitiesView, *lead_type_views_common)
+
 
 class LeadsView(DocMixin, LeadsBaseView):
     PAGING_SCHEMA = RawPaginationSchema
@@ -57,10 +60,12 @@ class LeadsView(DocMixin, LeadsBaseView):
 
         query = db.select([*Lead.t.c,
                            LeadStatus.t.c.description.label('status'),
-                           LeadSource.t.c.description.label('source')]) \
+                           LeadSource.t.c.description.label('source'),
+                           LeadType.t.c.description.label('type')]) \
             .select_from(Lead.t
                          .outerjoin(LeadStatus.t) \
-                         .outerjoin(LeadSource.t)) \
+                         .outerjoin(LeadSource.t) \
+                         .outerjoin(LeadType.t)) \
             .order_by(self.MODEL_CLASS.finish_at.desc()) \
             .order_by(self.MODEL_CLASS.created_at.desc()) \
             .order_by(self.MODEL_CLASS.id)
@@ -169,7 +174,7 @@ class LeadStatusesView(DocMixin, LeadStatusesBaseView):
         return await super().get(request)
 
     @doc.summary('Create new Lead status')
-    @doc.description('Create new Lead')
+    @doc.description('Create new Lead status')
     @doc.consumes(request_body(LeadStatusBaseSchema), location='body')
     @doc.response(201, 'lead status created', description='Created response')
     @error_responses(401)
@@ -191,14 +196,37 @@ class LeadSourcesView(DocMixin, LeadSourcesBaseView):
     async def get(self, request: TrackedRequest) -> HTTPResponse:
         return await super().get(request)
 
-    @doc.summary('Create new Lead')
-    @doc.description('Create new Lead')
+    @doc.summary('Create new Lead source')
+    @doc.description('Create new Lead source')
     @doc.consumes(request_body(LeadSourceBaseSchema), location='body')
     @doc.response(201, 'lead created', description='Created response')
     @error_responses(401)
     async def post(self, request: TrackedRequest) -> HTTPResponse:
         data = LeadSourceBaseSchema().load(request.json)
         lead = await LeadSource.create(**data)
+        log.debug(f'lead created {lead}')
+
+        return CreatedResponse('Lead source successfully created')
+
+
+class LeadTypesView(DocMixin, LeadTypesBaseView):
+    PAGING_SCHEMA = IntPaginationSchema
+
+    @doc.summary('Get list of lead types')
+    @doc.description('Get list of available lead types')
+    @doc.response(200, many_response(LeadTypeResponseSchema), description='List of lead types')
+    @error_responses(401)
+    async def get(self, request: TrackedRequest) -> HTTPResponse:
+        return await super().get(request)
+
+    @doc.summary('Create new Lead type')
+    @doc.description('Create new Lead type')
+    @doc.consumes(request_body(LeadTypeBaseSchema), location='body')
+    @doc.response(201, 'lead  type created', description='Created response')
+    @error_responses(401)
+    async def post(self, request: TrackedRequest) -> HTTPResponse:
+        data = LeadTypeBaseSchema().load(request.json)
+        lead = await LeadType.create(**data)
         log.debug(f'lead created {lead}')
 
         return CreatedResponse('Lead source successfully created')
