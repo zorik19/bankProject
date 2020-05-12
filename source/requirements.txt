@@ -21,4 +21,4 @@ Werkzeug==1.0.1
 # see for details https://github.com/huge-success/sanic-openapi/pull/157 and 168
 git+git://github.com/bolshoydi/sanic-openapi.git@4567e81
 
-git+ssh://git@github.com/bistegra/fwork.git@0.0.3#egg=fwork_common
+git+ssh://git@github.com/bistegra/fwork.git@0.0.5#egg=fwork_common
