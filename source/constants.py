@@ -21,3 +21,11 @@ FORMAT_TO_MIME_TYPE = {
     'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'csv': 'text/csv'
     }
+
+LEAD_TYPE_TO_ID = {
+    'победитель': 1,
+    'постоянный клиент': 2,
+    'участник': 3,
+    'агент': 4,
+    'аналитика': 5,
+    }
