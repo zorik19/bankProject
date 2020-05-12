@@ -19,6 +19,7 @@ from fwork.common.sanic.crud.requests import raw_args
 from fwork.common.sanic.crud.views import PagedEntitiesView, SingleEntityView
 from fwork.common.schemas.request_args import IntPaginationSchema, RawPaginationSchema
 from source.application.utils.hash import hash_payload
+from source.application.utils.xlsx import generate_xlsx
 from source.constants import FORMAT_TO_MIME_TYPE, LeadSourceType
 from source.logger import get_logger
 from source.models.lead import Lead, LeadSource, LeadStatus, LeadType
@@ -147,9 +148,14 @@ class LeadFileView(DocMixin, HTTPMethodView):
                   location='query')
     @doc.response(200, 'OK', description='Leads uploaded successfully')
     async def get(self, request) -> HTTPResponse:
-        # TODO: implement me
-        data = BytesIO(b"some initial binary data: \x00\x01").read()
-        return response.raw(data, content_type=FORMAT_TO_MIME_TYPE['xlsx'])
+        data = generate_xlsx()
+
+        headers = {'Content-Disposition': f'attachment; filename="{data.name}"', }
+
+        return response.raw(data.getvalue(),
+                            headers=headers,
+                            content_type=FORMAT_TO_MIME_TYPE['xlsx'],
+                            )
 
     @doc.summary('Upload file of leads')
     @doc.description('Upload file of leads in different formats like `csv`, `xlsx`')
