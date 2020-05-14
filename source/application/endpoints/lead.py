@@ -76,7 +76,13 @@ class LeadsView(DocMixin, LeadsBaseView):
         if url_params.get('incoming'):
             query = query.where(Lead.external_id == None)
         if url_params.get('external_id'):
-            query = query.where(Lead.external_id == url_params['external_id'])
+            query = query.where(Lead.external_id == url_params['external_id']) \
+                .order_by(self.MODEL_CLASS.in_progress)
+        if url_params.get('date_from'):
+            query = query.where(sa.func.date(Lead.finish_at) >= url_params['date_from'])
+        if url_params.get('date_to'):
+            query = query.where(sa.func.date(Lead.finish_at) <= url_params['date_to'])
+
         return query
 
     def get_collection_query(self, request, url_params, log):

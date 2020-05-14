@@ -1,6 +1,8 @@
+from datetime import datetime, time
 from functools import partial
 
-from marshmallow import fields
+import pytz
+from marshmallow import fields, post_load
 
 from fwork.common.schemas.constants import DICT_SCHEMA_EXCLUDED_FIELDS
 from fwork.common.schemas.factory import make_model_request_schema
@@ -21,6 +23,17 @@ class LeadRequestSchema(LeadBaseSchema):
 
 
 class LeadFilterSchema(FilterSchema):
-    today = fields.Boolean(required=False, description='finish_at today', default=False)
     incoming = fields.Boolean(required=False, description='Not assigned leads', default=False)
     external_id = fields.Int(required=False, description='Assigned to a definite user')
+    date_from = fields.Date(required=False, description='finish_at from date %Y-%m-%d')
+    date_to = fields.Date(required=False, description='finish_at to date %Y-%m-%d')
+
+    @post_load
+    def convert_timezone(self, data, **kwargs):
+
+        for key in ('date_from', 'date_to'):
+            if key not in data:
+                continue
+            data[key] = pytz.utc.localize(datetime.combine(data[key], time.min))
+
+        return data
