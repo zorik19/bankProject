@@ -29,3 +29,21 @@ LEAD_TYPE_TO_ID = {
     'агент': 4,
     'аналитика': 5,
     }
+
+
+class LeadStatusEnum(Enum):
+    """
+    Enum for LeadStatus models.
+    As it rare changes  - we can use it as enum
+    """
+    NOT_PHONED: int = 1
+    WAIT_FOR_PAY: int = 2
+    CHANGE_TIME: int = 3
+    DENIAL: int = 4
+    PRODUCTION: int = 5
+
+    def __str__(self):
+        return str(self.value)
+
+
+

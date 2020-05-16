@@ -11,7 +11,8 @@ from source.models.lead import Lead, LeadSource, LeadStatus, LeadType
 
 _make_schema = partial(make_model_request_schema, exclude=DICT_SCHEMA_EXCLUDED_FIELDS + ('id',))
 
-LeadBaseSchema = make_model_request_schema(Lead, exclude=DICT_SCHEMA_EXCLUDED_FIELDS + ('id', 'lead_hash'))
+LeadBaseSchema = make_model_request_schema(Lead, exclude=DICT_SCHEMA_EXCLUDED_FIELDS + ('id', 'lead_hash'),
+                                           allow_none=True)
 LeadStatusBaseSchema = _make_schema(LeadStatus)
 LeadSourceBaseSchema = _make_schema(LeadSource)
 LeadTypeBaseSchema = _make_schema(LeadType)
@@ -27,6 +28,7 @@ class LeadFilterSchema(FilterSchema):
     external_id = fields.Int(required=False, description='Assigned to a definite user')
     date_from = fields.Date(required=False, description='finish_at from date %Y-%m-%d')
     date_to = fields.Date(required=False, description='finish_at to date %Y-%m-%d')
+    status_id = fields.Int(required=False, description='Lead status filter')
 
     @post_load
     def convert_timezone(self, data, **kwargs):
