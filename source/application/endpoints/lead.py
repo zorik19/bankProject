@@ -1,16 +1,11 @@
 from io import BytesIO
 
 import sqlalchemy as sa
-from sanic import response
-from sanic.response import HTTPResponse
-from sanic.views import HTTPMethodView
-from sanic_openapi import doc
-
 from fwork.common.auth import authorized
 from fwork.common.auth.token import get_auth_payload_from_request
 from fwork.common.db.postgres.conn_async import db
 from fwork.common.http import HTTPStatus
-from fwork.common.http.response import BadRequestResponse, CreatedResponse, OKResponse, SingleEntityResponse
+from fwork.common.http.response import BadRequestResponse, CreatedResponse, SingleEntityResponse
 from fwork.common.logs.sanic_helpers import TrackedRequest
 from fwork.common.openapi.spec import DocMixin, error_responses, many_response, request_body, \
     single_response
@@ -18,8 +13,13 @@ from fwork.common.sanic.crud.factory import make_view
 from fwork.common.sanic.crud.requests import raw_args
 from fwork.common.sanic.crud.views import PagedEntitiesView, SingleEntityView
 from fwork.common.schemas.request_args import IntPaginationSchema, RawPaginationSchema
+from sanic import response
+from sanic.response import HTTPResponse
+from sanic.views import HTTPMethodView
+from sanic_openapi import doc
+
 from source.application.utils.hash import hash_payload
-from source.application.utils.xlsx import generate_xlsx
+from source.application.utils.xlsx import generate_xlsx, parse_xlsx
 from source.constants import FORMAT_TO_MIME_TYPE, LeadSourceType, LeadStatusEnum
 from source.logger import get_logger
 from source.models.lead import Lead, LeadSource, LeadStatus, LeadType
@@ -27,7 +27,7 @@ from source.schemas.lead import LeadBaseSchema, LeadFilterSchema, LeadRequestSch
     LeadStatusBaseSchema, LeadTypeBaseSchema
 from source.schemas.response_schemas.lead import LeadResponseBaseSchema, LeadResponseSchema, \
     LeadSourceResponseSchema, \
-    LeadStatusResponseSchema, LeadTypeResponseSchema
+    LeadStatusResponseSchema, LeadTypeResponseSchema, LeadXLSXResponseSchema
 
 log = get_logger('lead')
 
@@ -166,7 +166,8 @@ class LeadView(DocMixin, LeadBaseView):
             lead_q = Lead.query.where(Lead.id == lead_id).with_for_update()
             lead = await lead_q.gino.first()
 
-            if status_id and ((status_id == LeadStatusEnum.CHANGE_TIME.value) or (status_id != lead.status_id and lead.in_progress)):
+            if status_id and ((status_id == LeadStatusEnum.CHANGE_TIME.value) or (
+                    status_id != lead.status_id and lead.in_progress)):
                 # on change status we need to stop progress for this lead
                 updates['in_progress'] = False
 
@@ -203,12 +204,21 @@ class LeadFileView(DocMixin, HTTPMethodView):
     @doc.description('Upload file of leads in different formats like `csv`, `xlsx`')
     @doc.consumes(doc.String(name='format', required=True, description='Format of input data'),
                   location='query')
-    @doc.consumes(request_body(LeadBaseSchema), location='body')
-    @doc.response(200, 'OK', description='Leads uploaded successfully')
+    @doc.consumes(
+        doc.File(name="file"), location="formData", content_type="multipart/form-data"
+        )
+    @doc.response(200, single_response(LeadXLSXResponseSchema), description='Leads uploaded statistic')
     async def post(self, request) -> HTTPResponse:
-        # TODO: implement me
-        BytesIO(request.body)
-        return OKResponse()
+        if not request.body:
+            log.debug('Request body is empty')
+            return BadRequestResponse('Request body is empty')
+
+        xlsx_file = BytesIO(request.body)
+        uploaded, error_count, errors = await parse_xlsx(xlsx_file)
+        data = {'uploaded': uploaded,
+                'errors': errors,
+                'error_count': error_count}
+        return SingleEntityResponse(data, LeadXLSXResponseSchema)
 
 
 class LeadStatusesView(DocMixin, LeadStatusesBaseView):

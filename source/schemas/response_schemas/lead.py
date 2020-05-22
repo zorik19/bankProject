@@ -4,6 +4,8 @@ from marshmallow import fields
 
 from fwork.common.schemas.constants import DICT_SCHEMA_EXCLUDED_FIELDS
 from fwork.common.schemas.factory import make_model_response_schema
+from marshmallow_jsonapi import Schema
+
 from source.models.lead import Lead, LeadSource, LeadStatus, LeadType
 
 _make_schema = partial(make_model_response_schema, exclude=DICT_SCHEMA_EXCLUDED_FIELDS)
@@ -19,3 +21,13 @@ class LeadResponseSchema(LeadResponseBaseSchema):
     status = fields.String(description='lead status interpreted to string ')
     source = fields.String(description='lead source interpreted to string ')
     type = fields.String(description='lead type interpreted to string ')
+
+
+class LeadXLSXResponseSchema(Schema):
+    id = fields.Int(description='Just for json-api compatibility')
+    uploaded = fields.Int(description='How many rows were uploaded successfully')
+    errors = fields.List(fields.Dict(description='Error message detail'), description='Errors list')
+    error_count = fields.Int(description='How many rows were rejected (didn\'t uploaded)')
+
+    class Meta:
+        type_ = 'xlsx_upload'

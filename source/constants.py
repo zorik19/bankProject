@@ -30,6 +30,8 @@ LEAD_TYPE_TO_ID = {
     'аналитика': 5,
     }
 
+BULK_INSERT_LIMIT = 100
+
 
 class LeadStatusEnum(Enum):
     """
@@ -44,6 +46,3 @@ class LeadStatusEnum(Enum):
 
     def __str__(self):
         return str(self.value)
-
-
-
