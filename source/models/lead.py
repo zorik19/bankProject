@@ -1,7 +1,6 @@
+from fwork.common.db.postgres.conn_async import db
 from sqlalchemy import BigInteger, Boolean, Column, Date, DateTime, Float, ForeignKey, func, VARCHAR
 from sqlalchemy.dialects.postgresql import JSONB
-
-from fwork.common.db.postgres.conn_async import db
 
 
 # TODO: rm __table_args__ = {'extend_existing': True} why meta called twice?
@@ -13,7 +12,7 @@ class Lead(db.Model):
     external_id = Column(BigInteger, nullable=True, index=True, comment='ID пользователя из сервиса авторизации')
     status_id = Column(BigInteger, ForeignKey('lead_statuses.id'), nullable=True, index=True, comment='Статус')
     source_id = Column(BigInteger, ForeignKey('lead_sources.id'), nullable=False, comment='Источник создания')
-    name = Column(VARCHAR(150), index=True, nullable=False, comment='ФИО или название компании')
+    name = Column(VARCHAR(150), index=True, nullable=True, comment='ФИО или название компании')
     phone_number = Column(VARCHAR(length=255), index=True, comment='Телефон')
     email = Column(VARCHAR(length=200), index=True, comment='email')
     in_progress = Column(Boolean, server_default="0", index=True, nullable=False,
@@ -27,7 +26,8 @@ class Lead(db.Model):
     region = Column(VARCHAR(100), nullable=True, comment='Регион')
     inn = Column(VARCHAR(50), nullable=True, comment='ИНН')
     lead_person = Column(VARCHAR(150), nullable=True, comment='Контактное лицо')
-    incoming_date = Column(Date(), server_default=func.current_timestamp(), comment='Дата прихода лида')
+    incoming_date = Column(Date(), server_default=func.current_date(), default=func.current_date(),
+                           comment='Дата прихода лида')
     lead_hash = Column(VARCHAR(32), nullable=True, comment='md5 чек сумма полей')
     type_id = Column(BigInteger, ForeignKey('lead_types.id'), nullable=True, index=True, comment='Наименование базы')
     federal_law = Column(VARCHAR(50), nullable=True, comment='Федеральный закон')
