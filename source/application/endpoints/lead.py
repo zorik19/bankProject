@@ -65,7 +65,7 @@ class LeadsView(DocMixin, LeadsBaseView):
                          .outerjoin(LeadStatus.t) \
                          .outerjoin(LeadSource.t) \
                          .outerjoin(LeadType.t)) \
-            .order_by(self.MODEL_CLASS.finish_at.desc()) \
+            .order_by(self.MODEL_CLASS.finish_at.nullsfirst()) \
             .order_by(self.MODEL_CLASS.created_at.desc()) \
             .order_by(self.MODEL_CLASS.id)
 
