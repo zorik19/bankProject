@@ -43,7 +43,7 @@ class CommentsView(DocMixin, CommentsBaseView):
         lead_id = url_params['lead_id']
         query = db.select([*Comment.t.c, LeadStatus.t.c.description.label('status')]) \
             .select_from(Comment.t
-                         .join(LeadStatus.t)) \
+                         .outerjoin(LeadStatus.t)) \
             .where(Comment.lead_id == lead_id) \
             .order_by(Comment.t.c.created_at.desc())
 
