@@ -54,6 +54,12 @@ XLSX_UPLOAD_ERROR_LIMIT = 100
 log = get_logger('xlsx')
 
 
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+
 def load_row(row: tuple) -> dict:
     schema = LeadXLSXSchema()
     fields = schema.declared_fields.copy()
@@ -88,7 +94,6 @@ async def parse_xlsx(file: BytesIO, skip_header=True) -> Tuple[int, int, list]:
     :return: list of errors
     """
     errors = []
-    uploaded_leads = 0
     to_insert_list = []
     wb = load_workbook(filename=file, data_only=True)
     ws = wb.worksheets[FIRST_SHEET_INDEX]
@@ -99,7 +104,6 @@ async def parse_xlsx(file: BytesIO, skip_header=True) -> Tuple[int, int, list]:
         try:
             data = load_row(row)
         except ValidationError as e:
-            # todo: add rownumber to error
             log.info(f'Error occurred during xlsx row validation {e}')
             # to know which row it doesn't metter which Cell to take => take zero one
             err = charge_error(e.messages, row[ZERO_CELL].row)
@@ -109,21 +113,22 @@ async def parse_xlsx(file: BytesIO, skip_header=True) -> Tuple[int, int, list]:
                 break
             continue
 
-        data['source_id'] = LeadSourceType.XLSX.value
-        lead_hash = hash_payload(data)
-        data['lead_hash'] = lead_hash
+        if not errors:
+            # if we have errors there is no reason to accumulate data, as they wouldn't be loaded in DB
+            data['source_id'] = LeadSourceType.XLSX.value
+            lead_hash = hash_payload(data)
+            data['lead_hash'] = lead_hash
+            to_insert_list.append(data)
 
-        to_insert_list.append(data)
-        if len(to_insert_list) >= BULK_INSERT_LIMIT:
-            await Lead.insert().gino.all(to_insert_list)
-            uploaded_leads += len(to_insert_list)
-            to_insert_list = []
+    if errors:
+        # do not do data upload if have any errors
+        return 0, len(errors), errors
+    else:
+        # upload data by batch
+        for batch in chunks(to_insert_list, BULK_INSERT_LIMIT):
+            await Lead.insert().gino.all(batch)
 
-    # if less then BULK_INSERT_LIMIT, and for last chunk
-    await Lead.insert().gino.all(to_insert_list)
-    uploaded_leads += len(to_insert_list)
-
-    return uploaded_leads, len(errors), errors
+    return len(to_insert_list), 0, []
 
 
 def generate_xlsx(name: str = 'example.xlsx') -> BytesIO:
