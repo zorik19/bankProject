@@ -1,6 +1,3 @@
-from sanic.response import HTTPResponse
-from sanic_openapi import doc
-
 from fwork.common.auth import authorized
 from fwork.common.auth.token import get_auth_payload_from_request
 from fwork.common.db.postgres.conn_async import db
@@ -11,6 +8,9 @@ from fwork.common.openapi.spec import DocMixin, error_responses, many_response, 
 from fwork.common.sanic.crud.factory import make_view
 from fwork.common.sanic.crud.views import PagedEntitiesView, SingleEntityView
 from fwork.common.schemas.request_args import RawPaginationSchema
+from sanic.response import HTTPResponse
+from sanic_openapi import doc
+
 from source.logger import get_logger
 from source.models.comment import Comment
 from source.models.lead import Lead, LeadStatus
