@@ -45,7 +45,7 @@ class CommentsView(DocMixin, CommentsBaseView):
             .select_from(Comment.t
                          .outerjoin(LeadStatus.t)) \
             .where(Comment.lead_id == lead_id) \
-            .order_by(Comment.t.c.created_at.desc())
+            .order_by(Comment.t.c.created_at)
 
         return query
 
