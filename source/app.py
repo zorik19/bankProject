@@ -15,7 +15,7 @@ V1 = '/api/v1'
 # Register views to handle requests.
 app.add_route(LeadsView.as_view(), f'{V1}/leads')
 app.add_route(LeadFileView.as_view(), f'{V1}/leads/file')
-app.add_route(LeadStatusesView.as_view(), f'{V1}/lead_statues')
+app.add_route(LeadStatusesView.as_view(), f'{V1}/lead_statuses')
 app.add_route(LeadView.as_view(), f'{V1}/leads/<lead_id:int>')
 app.add_route(LeadSourcesView.as_view(), f'{V1}/lead_sources/')
 app.add_route(LeadTypesView.as_view(), f'{V1}/lead_types/')
